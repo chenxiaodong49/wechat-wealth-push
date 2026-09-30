@@ -40,8 +40,24 @@ Page({
   async loadProducts() {
     this.setData({ loading: true });
     try {
-      const d = await req.get('/api/products');
-      const decorated = fmt.decorateList(d.products);
+      let d;
+      if (app.globalData.USE_STATIC) {
+        // 免服务器模式：直接读 GitHub Pages 上的静态 JSON
+        d = await new Promise((resolve, reject) => {
+          wx.request({
+            url: app.globalData.PAGES_BASE + '/products.json',
+            success: (res) => {
+              if (res.statusCode >= 200 && res.statusCode < 300) resolve(res.data);
+              else reject(new Error('HTTP ' + res.statusCode));
+            },
+            fail: (err) => reject(err),
+          });
+        });
+      } else {
+        // 有后端模式
+        d = await req.get('/api/products');
+      }
+      const decorated = fmt.decorateList(d.products || []);
       const map = {};
       decorated.forEach((p) => (map[p.productCode] = p));
       app.globalData.productMap = map;
@@ -83,21 +99,24 @@ Page({
   },
 
   onSubscribeTap() {
-    if (!app.globalData.openid) {
-      wx.showToast({ title: '请稍候重试', icon: 'none' });
-      return;
-    }
     wx.requestSubscribeMessage({
       tmplIds: [SUBSCRIBE_TMPL_ID],
       success: (res) => {
         if (res[SUBSCRIBE_TMPL_ID] === 'accept') {
-          req
-            .post('/api/subscribe', { openid: app.globalData.openid })
-            .then(() => {
-              this.setData({ subscribed: true });
-              wx.showToast({ title: '已开启每日推送', icon: 'success' });
-            })
-            .catch(() => wx.showToast({ title: '订阅登记失败', icon: 'none' }));
+          if (app.globalData.USE_STATIC) {
+            // 免服务器模式：授权后即完成（接收人 openid 已在 GitHub Secrets 配置）。
+            this.setData({ subscribed: true });
+            wx.showToast({ title: '已授权，每日将收到推送', icon: 'success' });
+          } else {
+            // 有后端模式：把 openid 登记到后端订阅列表
+            req
+              .post('/api/subscribe', { openid: app.globalData.openid })
+              .then(() => {
+                this.setData({ subscribed: true });
+                wx.showToast({ title: '已开启每日推送', icon: 'success' });
+              })
+              .catch(() => wx.showToast({ title: '订阅登记失败', icon: 'none' }));
+          }
         } else {
           wx.showToast({ title: '未授权推送', icon: 'none' });
         }

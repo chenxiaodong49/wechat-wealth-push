@@ -1,0 +1,8 @@
+{
+  "updatedAt": "",
+  "source": "pending",
+  "count": 0,
+  "summary": { "count": 0, "bankText": "暂无", "dateRange": "" },
+  "products": [],
+  "note": "此文件由 GitHub Actions 每天定时更新（server/scripts/push.js）。首次推送后这里会出现真实的合格产品列表。"
+}

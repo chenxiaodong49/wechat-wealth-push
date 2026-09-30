@@ -47,11 +47,13 @@ wechat-wealth-push/
 │       ├── store.js        # 订阅用户存储（JSON 文件，生产换数据库）
 │       ├── scheduler.js    # 定时推送 + 产品缓存
 │       ├── pipeline.js     # 完整流水线：抓取→预筛→补全销售机构→渠道筛选
-│       ├── server.js       # API 服务
+│       ├── server.js       # API 服务（有后端模式用）
+│       ├── scripts/push.js # 免服务器推送脚本（GitHub Actions 调用）
 │       └── _selftest.js    # 离线筛选逻辑自测
+├── docs/products.json      # 每日生成的产品列表（GitHub Pages 托管，小程序读取）
 ├── Dockerfile / docker-compose.yml   # Docker 一键部署
 ├── render.yaml             # Render 一键部署配置
-├── .github/workflows/      # GitHub Actions 每日 09:00 唤醒推送
+├── .github/workflows/      # GitHub Actions 每天 09:00 定时抓取+筛选+推送
 ├── start.sh / start.bat    # 本地一键启动（自动生成 .env）
 └── miniprogram/            # 微信小程序前端（用微信开发者工具打开本目录）
     ├── app.js / app.json / app.wxss
@@ -110,63 +112,113 @@ node src/_selftest.js        # 预期输出“合格数量(预期7): 7”并通�
 1. 打开微信开发者工具 → 导入项目 → 选择 `miniprogram/` 目录。
 2. 把 `project.config.json` 里的 `appid` 改成你自己的小程序 AppID（或先用测试号）。
 3. 勾选 **详情 → 本地设置 → 不校验合法域名**（本地联调用 `http://localhost:3000`）。
-4. 如需真机/上线：把 `miniprogram/app.js` 的 `apiBase` 改为你的 **https 域名**，
-   并在小程序后台 **开发 → 开发设置 → 服务器域名 → request 合法域名** 中加入该域名。
-5. 编译预览：列表页可下拉刷新、按银行/风险筛选、点「开启每日推送」、点卡片看详情。
+4. 如需真机/上线（免服务器方案，默认）：
+   把 `miniprogram/app.js` 的 `PAGES_BASE` 改成你的 GitHub Pages 地址
+   （`https://<用户名>.github.io/wechat-wealth-push`），**保持 `USE_STATIC: true`**，
+   然后「上传」新版本。**无需在小程序后台配「服务器域名」**（读的是 GitHub Pages 静态文件）。
+5. 编译预览：列表页可下拉刷新、按银行/风险筛选、点「开启每日推送」（即授权订阅消息）、点卡片看详情。
 
 ---
 
-## 四（之二）、零基础一键部署（推荐，几乎不用敲命令）
+## 四（之二）、零基础部署：推荐「免服务器方案」（无需信用卡、无需常驻服务器）
 
-目标：把后端跑在公网 + HTTPS 上（微信要求），并让每天 09:00 自动推送。
-下面两条路二选一，**只改 1 处域名 + 填 3 个密钥**即可。
+> 你之前卡在 Render 要绑卡。这里给出**完全不需要信用卡、不需要任何云服务器**的方案：
+> 用 **GitHub Actions**（免费）每天 09:00 跑脚本抓数据+发推送，用 **GitHub Pages**（免费）
+> 托管产品列表给小程序读。你只需要一个 **GitHub 账号**（邮箱注册即可）。
 
-### 路线 A：Render 一键部署（免费，最省心）
-1. 把本项目推到你的 GitHub 仓库（或 Fork 一份）。
-2. 打开 https://render.com ，用 GitHub 登录 → **New → Blueprint** → 选中本仓库。
-   Render 会读取 `render.yaml` 自动建好 Web 服务（免费版，自带 `https://xxx.onrender.com`）。
-3. 在 Render 控制台 **Environment** 里填入 3 个变量：
-   - `WX_APPID`、`WX_APPSECRET`（微信公众平台「开发设置」里拿）
-   - `WX_SUBSCRIBE_TEMPLATE_ID`（订阅消息模板 ID，见路线末尾说明）
-   - `PUSH_SECRET`（随便写个字符串，用于手动触发推送的安全密钥）
-4. 部署完成后记下你的 `https://xxx.onrender.com` 域名 —— 这就是小程序的 `apiBase`。
+### 整体原理
+```
+GitHub Actions（每天 09:00 北京时间）
+   ├─ 抓中国理财网 → 筛 R1/R2 + 半年内可赎回 + 未来3天新发 + 招行/中行/工行可买
+   ├─ 写 docs/products.json  ──►  GitHub Pages（https://你.github.io/仓库/products.json）
+   └─ 给 SUBSCRIBERS 里的 openid 发微信订阅消息
+小程序 ──读──► GitHub Pages 的 products.json（列表/详情）
+```
+小程序**不连任何后端**，所以你也不用配「服务器域名」。
 
-   > 也可直接点下面按钮部署（需先把仓库推到 GitHub）：
-   > [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+### 步骤 1：把代码推到 GitHub（你已完成的部分）
+把本仓库推到 GitHub（公开/私有均可）。仓库名建议用 `wechat-wealth-push`。
 
-### 路线 B：Docker 本地/服务器一键
+### 步骤 2：开启 GitHub Pages（托管产品列表，1 次）
+1. 进你的 GitHub 仓库 → **Settings → Pages**。
+2. **Build and deployment → Source** 选 **Deploy from a branch**。
+3. **Branch** 选 `main`，目录选 **/docs** → 点 **Save**。
+4. 等一两分钟，访问 `https://<你的GitHub用户名>.github.io/wechat-wealth-push/products.json`
+   能看到 JSON 即成功（首次是占位文件，跑过一次 Actions 后变真实数据）。
+
+### 步骤 3：配置 5 个仓库密钥（Settings → Secrets → Actions → New repository secret）
+每行一个，**名字照抄、值填你自己的**：
+
+| Secret 名（区分大小写） | 值 |
+| --- | --- |
+| `WX_APPID` | 小程序 AppID（微信公众平台「开发设置」） |
+| `WX_APPSECRET` | 小程序 AppSecret（同页点「重置/查看」） |
+| `WX_SUBSCRIBE_TEMPLATE_ID` | 你申请的订阅消息模板 ID |
+| `SUBSCRIBERS` | 接收人 openid，**多个用半角逗号分隔**（怎么拿见下方「获取 openid」） |
+| `DATA_SOURCE` | 填 `chinawealth`（只抓真实数据；若想演示先填 `auto`） |
+
+> 填完这 5 个就够推送了，无需绑卡、无需服务器。
+
+### 步骤 4：手动跑一次验证
+进仓库 **Actions → 每日理财推送 → Run workflow**。几分钟后：
+- `docs/products.json` 被更新（Settings → Pages 的地址能看到新数据）；
+- 你的微信收到一条订阅消息（前提是已点过小程序的「开启每日推送」授权过）。
+之后每天 **北京时间 09:00** 自动跑，无需再管。
+
+### 步骤 5：小程序改 1 行域名
+把 `miniprogram/app.js` 里的 `PAGES_BASE` 改成你的 GitHub Pages 地址
+（格式 `https://<用户名>.github.io/wechat-wealth-push`），**保持 `USE_STATIC: true`**，
+然后在微信开发者工具里**上传**新版本。无需配「服务器域名」（因为读的是 GitHub Pages 的静态文件）。
+
+### 怎么拿到你的 openid（填进 SUBSCRIBERS）
+订阅消息要发给谁，得知道你的微信 openid。最简单两种办法：
+- **方法 1（最省事）**：微信开发者工具里打开小程序 → 点「真机调试」或「预览」，
+  顶部/设备面板会直接显示你的 **OpenID**，复制它填进 `SUBSCRIBERS`。
+- **方法 2**：在小程序里临时加一行 `console.log(res)` 打印 `wx.login` 的 code，
+  再用微信「接口调试工具」拿 code 换 openid（稍麻烦，新手优先方法 1）。
+
+> 单人订阅（只推给你自己）时，上面 5 个密钥 + 1 行域名就齐了。
+> 要推给多人：让每个人用方法 1 拿到自己的 openid，逗号拼进 `SUBSCRIBERS` 即可（最多一次可填多个）。
+
+---
+
+## 四（之三）、备选：有后端部署（Render / Docker，适合要多人在线看列表）
+
+如果你希望小程序连一个真正的后端（多人订阅、在线管理），可走下面任一条。
+注意 Render 免费版**需要绑一张卡做验证**（储蓄卡/信用卡均可，免费实例不扣费）；
+不想绑卡就继续用上面的「免服务器方案」。
+
+### 路线 A：Render 一键部署
+1. 把本项目推到 GitHub → 打开 https://render.com → 用 GitHub 登录 → **New → Blueprint** → 选中本仓库。
+   Render 读取 `render.yaml` 自动建好 Web 服务（免费，自带 `https://xxx.onrender.com`）。
+2. 在 Render 控制台 **Environment** 填 4 个变量：`WX_APPID` / `WX_APPSECRET` /
+   `WX_SUBSCRIBE_TEMPLATE_ID` / `PUSH_SECRET`（随便写个字符串）。
+3. 记好 `https://xxx.onrender.com` —— 把小程序 `app.js` 的 `USE_STATIC` 改为 `false`、`apiBase` 改成它，
+   并在小程序后台「服务器域名 → request 合法域名」加入该域名。
+
+### 路线 B：Docker 本地/服务器
 ```bash
-# 本地或任意装了 Docker 的服务器
 cp .env.example .env        # 填好 AppID/AppSecret/模板ID
 docker compose up -d        # 后台启动，访问 http://<机器IP>:3000/api/health
 ```
-反向代理到 HTTPS（用 Nginx/Caddy 或云厂商）后即可作为小程序 `apiBase`。
+反向代理到 HTTPS（Nginx/Caddy/云厂商）后即可作为小程序 `apiBase`。
 
-### 保证“每天 09:00 必推”：GitHub Actions 免费唤醒
-免费版后端会休眠，休眠时进程内的 `node-cron` 不触发。本项目已内置
-`.github/workflows/daily-push.yml`，每天 **北京时间 09:00** 主动访问你的 `/api/trigger-push`
-把你唤醒并执行推送（无需常驻服务器）：
-1. 在 GitHub 仓库 **Settings → Secrets → Actions** 添加：
-   - `PUSH_URL` = `https://<你的域名>/api/trigger-push`
-   - `PUSH_SECRET` = 你在 Render/`.env` 里设的值
-2. 完成。之后每天自动唤醒推送；也可在 Actions 页 **Run workflow** 手动测一次。
-
-> 备选：若你用常驻服务器（如 pm2 守护），进程内 `node-cron` 已足够，无需 Actions。
+> 有后端模式下，定时推送由进程内 `node-cron`（每天 09:00）执行；免费实例会休眠，
+> 可保留 `.github/workflows/daily-push.yml` 的旧版「唤醒」逻辑，或改用 `pm2` 常驻。
 
 ---
 
-## 五、上线需要配置的 4 件事
+## 五、上线需要配置的 4 件事（免服务器方案）
 
-1. **AppID / AppSecret**：微信公众平台 → 开发管理 → 开发设置，填入 `.env` 的
-   `WX_APPID` / `WX_APPSECRET`。
-2. **订阅消息模板**：微信公众平台 → 订阅消息 → 我的模板 → 申请一个模板，
-   建议包含 4 个关键字：**产品数量 / 适用银行 / 起售日期 / 温馨提示**。
-   把模板 ID 填入 `WX_SUBSCRIBE_TEMPLATE_ID`，并让 `miniprogram/pages/index/index.js`
-   的 `SUBSCRIBE_TMPL_ID` 与之保持一致（字段顺序对应 `server/src/wechat.js` 的 `buildSubscribeData`）。
-3. **服务器域名**：后端部署到一台有公网 IP 的服务器，配置 HTTPS（必须，微信要求）。
-   在小程序后台把该域名加入 request 合法域名，并在 `app.js` 改为该地址。
-4. **定时任务**：后端用 `node-cron` 已在进程内每天 09:00 触发；生产建议用
-   `pm2` 守护进程，或用服务器 crontab 调用 `GET /api/trigger-push?secret=xxx`。
+1. **AppID / AppSecret**：微信公众平台 → 开发设置，填进 GitHub 仓库 Secret `WX_APPID` / `WX_APPSECRET`。
+2. **订阅消息模板**：微信公众平台 → 订阅消息 → 我的模板 → 申请，建议 4 个关键字
+   **产品数量 / 适用银行 / 起售日期 / 温馨提示**。模板 ID 填进 Secret `WX_SUBSCRIBE_TEMPLATE_ID`，
+   并让 `miniprogram/pages/index/index.js` 的 `SUBSCRIBE_TMPL_ID` 与之**完全一致**
+   （字段顺序对应 `server/src/wechat.js` 的 `buildSubscribeData`）。
+3. **接收人 openid**：用「四（之二）获取 openid」的办法拿到，填进 Secret `SUBSCRIBERS`
+   （多人逗号分隔）。小程序端点「开启每日推送」只是**授权**，真正发给谁由这个密钥决定。
+4. **GitHub Pages 域名**：开启 Pages（/docs）后，把 `app.js` 的 `PAGES_BASE` 改成
+   `https://<用户名>.github.io/wechat-wealth-push`，上传小程序新版本即可。无需配服务器域名。
 
 ---
 
