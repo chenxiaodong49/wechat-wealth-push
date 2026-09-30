@@ -1,0 +1,53 @@
+/* app.wxss 全局样式 */
+page {
+  background: #f5f6fa;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", Helvetica, sans-serif;
+  color: #1f2329;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin: 20rpx 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.muted {
+  color: #8a909c;
+  font-size: 24rpx;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2rpx 14rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  margin-right: 10rpx;
+  line-height: 36rpx;
+}
+
+.tag-r1 {
+  background: #e8f7ee;
+  color: #18a058;
+}
+
+.tag-r2 {
+  background: #fff3e0;
+  color: #d48806;
+}
+
+.tag-bank {
+  background: #eef2ff;
+  color: #2b5cff;
+}
+
+.tag-redeem {
+  background: #f0f5ff;
+  color: #2b5cff;
+}

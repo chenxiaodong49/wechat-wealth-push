@@ -1,0 +1,67 @@
+<!-- pages/index/index.wxml -->
+<view class="page">
+  <!-- 顶部摘要 + 订阅 -->
+  <view class="hero card">
+    <view class="hero-title">未来3天新发 · R1/R2 · 半年内可赎回</view>
+    <view class="hero-sub muted" wx:if="{{summary}}">
+      共 {{summary.count}} 只 · {{summary.bankText}}
+    </view>
+    <view class="hero-sub muted" wx:if="{{updatedAt}}">更新于 {{updatedAt}}</view>
+    <button
+      class="subscribe-btn {{subscribed ? 'subscribed' : ''}}"
+      bindtap="onSubscribeTap"
+      size="mini"
+    >{{subscribed ? '已订阅 ✓' : '开启每日推送'}}</button>
+  </view>
+
+  <!-- 银行筛选 -->
+  <view class="chips">
+    <view
+      wx:for="{{banks}}"
+      wx:key="code"
+      class="chip {{bankFilter === item.code ? 'chip-on' : ''}}"
+      data-code="{{item.code}}"
+      bindtap="onBankFilter"
+    >{{item.name}}</view>
+  </view>
+
+  <!-- 风险筛选 -->
+  <view class="chips">
+    <view
+      wx:for="{{risks}}"
+      wx:key="code"
+      class="chip {{riskFilter === item.code ? 'chip-on' : ''}}"
+      data-code="{{item.code}}"
+      bindtap="onRiskFilter"
+    >{{item.name}}</view>
+  </view>
+
+  <!-- 产品列表 -->
+  <view wx:if="{{products.length === 0 && !loading}}" class="empty muted">
+    当前筛选条件下暂无符合条件的产品
+  </view>
+
+  <view
+    wx:for="{{products}}"
+    wx:key="productCode"
+    class="card product"
+    data-code="{{item.productCode}}"
+    bindtap="goDetail"
+  >
+    <view class="row product-head">
+      <text class="tag tag-bank">{{item.bankName}}</text>
+      <text class="tag {{item.riskClass}}">{{item.riskLevel}}</text>
+      <text class="tag tag-redeem">{{item.redeemText}}</text>
+    </view>
+    <view class="product-name">{{item.name}}</view>
+    <view class="issuer muted">发行：{{item.issuerName}}</view>
+    <view class="row product-meta">
+      <text class="meta-rate">{{item.rateText}}</text>
+      <text class="muted">{{item.amountText}}</text>
+    </view>
+    <view class="row product-foot muted">
+      <text>起售 {{item.issueDate}}</text>
+      <text class="code">{{item.productCode}}</text>
+    </view>
+  </view>
+</view>

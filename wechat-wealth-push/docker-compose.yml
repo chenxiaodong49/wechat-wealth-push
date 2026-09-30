@@ -1,0 +1,12 @@
+services:
+  wealth-push:
+    build: .
+    container_name: wechat-wealth-push
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      # 订阅用户持久化到宿主机
+      - ./data:/app/data
+    restart: unless-stopped

@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/detail/detail"
+  ],
+  "window": {
+    "navigationBarTitleText": "理财新品日报",
+    "navigationBarBackgroundColor": "#2b5cff",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f6fa",
+    "enablePullDownRefresh": true
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

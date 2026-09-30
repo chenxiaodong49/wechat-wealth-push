@@ -1,0 +1,30 @@
+<!-- pages/detail/detail.wxml -->
+<view class="page" wx:if="{{p}}">
+  <view class="card head">
+    <view class="row">
+      <text class="tag tag-bank">{{p.bankName}}</text>
+      <text class="tag {{p.riskClass}}">{{p.riskLevel}}</text>
+      <text class="tag tag-redeem">{{p.redeemText}}</text>
+    </view>
+    <view class="title">{{p.name}}</view>
+  </view>
+
+  <view class="card">
+    <view class="rate-block">
+      <view class="rate-label muted">业绩比较基准 / 预期收益</view>
+      <view class="rate-value">{{p.rateText}}</view>
+      <view class="muted">{{p.amountText}} · {{p.currency}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="field" wx:for="{{fields}}" wx:key="label">
+      <text class="field-label">{{item.label}}</text>
+      <text class="field-value">{{item.value}}</text>
+    </view>
+  </view>
+
+  <view class="card note muted">
+    风险提示：理财非存款，产品有风险，投资须谨慎。本页数据来自中国理财网公开信息，仅供参考，不构成投资建议。最终以产品说明书为准。
+  </view>
+</view>

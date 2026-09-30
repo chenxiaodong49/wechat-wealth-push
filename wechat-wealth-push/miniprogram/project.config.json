@@ -1,0 +1,14 @@
+{
+  "description": "招行/中行/工行 R1/R2 半年内可赎回·未来3天新发理财产品每日推送",
+  "appid": "wxYOUR_APPID",
+  "projectname": "wechat-wealth-push",
+  "miniprogramRoot": "./",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": false
+  },
+  "compileType": "miniprogram"
+}

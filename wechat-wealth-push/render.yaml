@@ -1,0 +1,29 @@
+# Render 一键部署配置（免费版即可跑）。
+# 部署后 Render 会分配一个 https 域名，直接作为小程序的 request 合法域名。
+services:
+  - type: web
+    name: wechat-wealth-push
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PORT
+        value: "3000"
+      - key: WX_APPID
+        sync: false
+      - key: WX_APPSECRET
+        sync: false
+      - key: WX_SUBSCRIBE_TEMPLATE_ID
+        sync: false
+      - key: PUSH_SECRET
+        sync: false
+      - key: DATA_SOURCE
+        value: "chinawealth"
+      - key: PUSH_CRON
+        value: "0 9 * * *"

@@ -1,0 +1,80 @@
+/* pages/index/index.wxss */
+.page {
+  padding-bottom: 40rpx;
+}
+
+.hero {
+  background: linear-gradient(135deg, #2b5cff, #5b8bff);
+  color: #fff;
+}
+.hero-title {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.hero-sub {
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 8rpx;
+}
+.subscribe-btn {
+  margin: 20rpx 0 0;
+  background: #fff;
+  color: #2b5cff;
+  border-radius: 999rpx;
+}
+.subscribe-btn.subscribed {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.chips {
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx 24rpx 0;
+  flex-wrap: wrap;
+}
+.chip {
+  padding: 8rpx 28rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  color: #5a6270;
+  font-size: 26rpx;
+  border: 1rpx solid #e6e8ee;
+}
+.chip-on {
+  background: #2b5cff;
+  color: #fff;
+  border-color: #2b5cff;
+}
+
+.empty {
+  text-align: center;
+  padding: 80rpx 0;
+}
+
+.product-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin: 14rpx 0 6rpx;
+  line-height: 1.4;
+}
+.issuer {
+  margin-bottom: 10rpx;
+}
+.product-head {
+  flex-wrap: wrap;
+}
+.product-meta {
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+.meta-rate {
+  color: #d4380d;
+  font-weight: 600;
+  font-size: 28rpx;
+}
+.product-foot {
+  justify-content: space-between;
+}
+.code {
+  font-size: 22rpx;
+}
